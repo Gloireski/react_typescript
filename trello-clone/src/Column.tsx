@@ -5,7 +5,12 @@ import {
 import { Card } from "./Card"
 import { AddNewItem } from "./AddNewItem"
 import { useAppState } from "./state/AppStateContext"
-import { AddTask, moveList } from "./state/actions"
+import {
+    AddTask,
+    moveList,
+    moveTask,
+    setDraggedItem
+} from "./state/actions"
 import React from "react"
 import { useRef } from "react"
 import { useItemDrag } from "./utils/useItemDrag"
@@ -22,6 +27,7 @@ type ColumnProps = {
 export const Column = ({ text, id, isPreview }: ColumnProps) => {
     const { draggedItem, getTasksByListId, dispatch } = useAppState()
 
+    console.log(`Tasks for column ${id}:`, getTasksByListId(id));
     const tasks = getTasksByListId(id)
 
     const { drag } = useItemDrag({ type: "COLUMN", id, text})
@@ -29,7 +35,7 @@ export const Column = ({ text, id, isPreview }: ColumnProps) => {
     const ref = useRef<HTMLDivElement>(null)
 
     const [, drop] = useDrop({
-        accept: "COLUMN",
+        accept: ["COLUMN", "CARD"],
         hover: throttle(200, () => {
             if (!draggedItem) {
                 return
@@ -38,13 +44,28 @@ export const Column = ({ text, id, isPreview }: ColumnProps) => {
                 if (draggedItem.id == id) {
                     return
                 }
+                dispatch(moveList(draggedItem.id, id))
+            } else {
+                if (draggedItem.columnId === id) {
+                    return
+                }
+                if (tasks.length) {
+                    return
+                }
+                dispatch(
+                    moveTask(draggedItem.id, null, draggedItem.columnId, id)
+                )
+                dispatch(setDraggedItem({ ...draggedItem, columnId: id }))
             }
-
-            dispatch(moveList(draggedItem.id, id))
+           
         })
     })
 
     drag(drop(ref))
+
+    if (!ref.current) {
+    console.warn("Ref is null for card:", id)
+    }
 
     return (
         <ColumnContainer
@@ -54,7 +75,12 @@ export const Column = ({ text, id, isPreview }: ColumnProps) => {
             >
             <ColumnTitle>{text}</ColumnTitle>
             {tasks.map((task) => (
-                <Card text={task.text} id={task.id} key={task.id}/>
+                <Card 
+                    text={task.text}
+                    id={task.id}
+                    key={task.id}
+                    columnId={id}
+                    />
             ))}
                 <AddNewItem
                     toggleButtonText="+ Add another card"

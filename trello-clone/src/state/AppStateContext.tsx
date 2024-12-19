@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { createContext, useContext, FC, ReactNode, Dispatch } from "react"
+import { createContext, useContext, FC, ReactNode, Dispatch, useEffect } from "react"
 import { 
     AppStateReducer,
     AppState,
@@ -57,8 +57,11 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
 
     const getTasksByListId = (id: string) => {
         return lists.find((list) => list.id === id)?.tasks || []
-    };
-
+    }
+    useEffect(() => {
+        console.log("Updated state:", state);
+      }, [state]);
+      
     return (
         <AppStateContext.Provider
             value={{ draggedItem, lists, getTasksByListId, dispatch }}
@@ -66,4 +69,5 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
             {children}
         </AppStateContext.Provider>
     );
+    
 };
