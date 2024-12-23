@@ -6,11 +6,13 @@ import {
     List,
     Task 
 } from "./appStateReducer"
+import { save } from "../api"
 import { Action } from "./actions"
 import { useImmerReducer } from "use-immer"
 import { DragItem } from "../DragItem"
+import { withInitialState } from "../withInitialState"
 
-const appData: AppState = {
+export const appData: AppState = {
     lists: [
         {
             id: "0",
@@ -43,15 +45,22 @@ const AppStateContext = createContext<AppStateContextProps>(
 )
 
 interface AppStateProviderProps {
-    children: ReactNode;
+    children: ReactNode
+    initialState: AppState
 }
 
 export const useAppState = () => {
     return useContext(AppStateContext)
 }
 
-export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
-    const [state, dispatch] = useImmerReducer(AppStateReducer, appData)
+export const AppStateProvider = 
+    withInitialState<AppStateProviderProps>(
+        ({ children, initialState}) => {
+    // const [state, dispatch] = useImmerReducer(AppStateReducer, appData)
+    const [state, dispatch] = useImmerReducer(
+        AppStateReducer,
+        initialState
+    )
     // const { lists } = appData;
     const { draggedItem, lists } = state
 
@@ -59,7 +68,8 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
         return lists.find((list) => list.id === id)?.tasks || []
     }
     useEffect(() => {
-        console.log("Updated state:", state);
+        console.log("Updated state:", state)
+        save(state)
       }, [state]);
       
     return (
@@ -70,4 +80,4 @@ export const AppStateProvider: FC<AppStateProviderProps> = ({ children }) => {
         </AppStateContext.Provider>
     );
     
-};
+});
